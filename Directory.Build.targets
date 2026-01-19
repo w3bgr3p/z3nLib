@@ -3,6 +3,8 @@
     <PropertyGroup>
         <ReleasesFolder Condition="'$(ReleasesFolder)' == ''">$(SolutionDir)z3nLib\</ReleasesFolder>
         <ExternalAssemblies Condition="'$(ExternalAssemblies)' == ''">$(SolutionDir)ZennoLab\ExternalAssemblies\</ExternalAssemblies>
+        <ProjectsFolder Condition="'$(ProjectsFolder)' == ''">$(SolutionDir)_projects\</ProjectsFolder>
+
     </PropertyGroup>
 
     <!-- Автоматическое копирование для проектов z3n.* -->
@@ -31,6 +33,28 @@
         <!-- Выводим сообщение для каждой папки (батчинг) -->
         <Message
                 Text="✓ Copied $(TargetFileName) → %(DestinationFolders.Identity)"
+                Importance="high" />
+    </Target>
+
+    <!-- Копирование для проектов из папки _projects -->
+    <Target Name="CopyProjectsToRoot"
+            AfterTargets="Build"
+            Condition="'$(Configuration)' == 'Release' AND $(MSBuildProjectDirectory.Contains('_projects'))">
+
+        <!-- Создаем папку, если не существует -->
+        <MakeDir
+                Directories="$(ProjectsFolder)"
+                Condition="!Exists('$(ProjectsFolder)')" />
+
+        <!-- Копируем DLL в корень _projects -->
+        <Copy
+                SourceFiles="$(TargetPath)"
+                DestinationFolder="$(ProjectsFolder)"
+                SkipUnchangedFiles="true" />
+
+        <!-- Выводим сообщение -->
+        <Message
+                Text="✓ Copied $(TargetFileName) → $(ProjectsFolder)"
                 Importance="high" />
     </Target>
 </Project>
