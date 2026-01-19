@@ -10,10 +10,8 @@ namespace z3nCore
 {
     public static class DBuilder
     {
-        private const string db_template = "https://raw.githubusercontent.com/w3bgr3p/z3nCore/refs/heads/master/.templates/db_template.json";
-        private const string api_template = "https://raw.githubusercontent.com/w3bgr3p/z3nCore/refs/heads/master/.templates/api_template.json";
+        private const string templatesUrl = "https://raw.githubusercontent.com/z3nFarm/z3n/refs/heads/master/templates/";
         
-
         public static string[] Columns(string tableSchem)
         {
 
@@ -453,7 +451,6 @@ namespace z3nCore
 
             return result;
         }
-        
         public static string FormSocial(this IZennoPosterProjectModel project, List<string> availableFields, string tableName, string formTitle, string message = "Select format (one field per box):")
         {
             var _project = project;
@@ -636,14 +633,13 @@ namespace z3nCore
             _project.SendInfoToLog($"[{lineCount}] records added to [{table}]", true);
             return lineCount.ToString();
         }
-
-
+        
         #region Import
 
         public static void ImportDbStructure(this IZennoPosterProjectModel project)
         {
             var db = new z3nCore.Db(project);
-            string jsonTemplate = DownloadTemplate(db_template);
+            string jsonTemplate = DownloadTemplate(templatesUrl+ "db_template.json");
             var template = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(jsonTemplate);
 
             foreach (var tableEntry in template)
@@ -819,7 +815,7 @@ namespace z3nCore
                 .Where(col => !serviceColumns.Contains(col.ToLower()))
                 .ToList();
 
-            string inputJson = DownloadTemplate(api_template); 
+            string inputJson = DownloadTemplate(templatesUrl+ "api_template.json"); 
             var importData = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(inputJson);
 
             foreach (var entry in importData)
