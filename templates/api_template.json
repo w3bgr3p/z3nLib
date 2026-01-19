@@ -1,0 +1,114 @@
+{
+  "okx": [
+    "REQUIRED",
+    "REQUIRED",
+    "REQUIRED",
+    "",
+    "",
+    ""
+  ],
+  "perplexity": [
+    "REQUIRED",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "openrouter": [
+    "REQUIRED",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "capguru": [
+    "REQUIRED",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "tg_logger": [
+    "REQUIRED",
+    "",
+    "",
+    "",
+    "REQUIRED",
+    ""
+  ],
+  "anticaptcha": [
+    "REQUIRED",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "capmonster": [
+    "REQUIRED",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "webshare": [
+    "REQUIRED",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "capsolver": [
+    "REQUIRED",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "mexc": [
+    "REQUIRED",
+    "REQUIRED",
+    "",
+    "REQUIRED",
+    "",
+    "REQUIRED"
+  ],
+  "bitget": [
+    "REQUIRED",
+    "REQUIRED",
+    "REQUIRED",
+    "REQUIRED",
+    "",
+    ""
+  ],
+  "binance": [
+    "REQUIRED",
+    "REQUIRED",
+    "",
+    "REQUIRED",
+    "",
+    ""
+  ],
+  "github": [
+    "REQUIRED",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "firstmail": [
+    "REQUIRED",
+    "REQUIRED",
+    "REQUIRED",
+    "REQUIRED",
+    "",
+    ""
+  ]
+}
