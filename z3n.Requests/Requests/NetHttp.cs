@@ -116,6 +116,7 @@ namespace z3nCore
         {
             if (string.IsNullOrEmpty(proxyString))
                 return null;
+            
 
             if (proxyString == "+")
                 proxyString = _project.SqlGet("proxy", "_instance");

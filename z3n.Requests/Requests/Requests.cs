@@ -1,21 +1,181 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ZennoLab.CommandCenter;
 using ZennoLab.InterfacesLibrary.Enums.Http;
 using ZennoLab.InterfacesLibrary.ProjectModel;
 using Newtonsoft.Json.Linq;
+using HttpMethod = ZennoLab.InterfacesLibrary.Enums.Http.HttpMethod;
+
+
+
 namespace z3nCore
 {
     public static class Requests
     {
-        private static readonly object LockObject = new object();
 
+        #region LOG
+
+        private static readonly HttpClient _httpLogClient = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+
+        private static bool IsHttpLoggingEnabled(this IZennoPosterProjectModel project)
+        {
+            if (project == null) return false;
+            string enabled = project.Var("httpLog");
+            return !string.IsNullOrEmpty(enabled);// == "True" || enabled == "1" || enabled == "true");
+        }
+        private static bool IsMasked(this IZennoPosterProjectModel project)
+        {
+            if (project == null) return false;
+            string enabled = project.Var("httpLog");
+            return enabled == "masked";// || enabled == "1" || enabled == "true");
+        }
+        private static void LogHttpTransaction(IZennoPosterProjectModel project, 
+            string method, string url, string requestBody, string[] requestHeaders, string requestCookies, string proxy, string responseBody, int statusCode,
+            DateTime startTime, DateTime endTime)  
+        {
+            if (!project.IsHttpLoggingEnabled()) return;
+            var mask = IsMasked(project);
+
+            string currentSource = project.Context["temp_src"]?.ToString() ?? "not-set";
+            
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    int durationMs = (int)(endTime - startTime).TotalMilliseconds;
+
+                    var safeHeaders = mask ? MaskSensitiveHeaders(requestHeaders) : requestHeaders;
+                    var safeCookies =  mask ? MaskSensitiveData(requestCookies) : requestCookies;
+                    var safeBody =  mask ? TruncateBody(requestBody, 50000) : requestBody;
+                    var safeResponse = mask ? TruncateBody(responseBody, 50000) : responseBody;
+                    string cookiesSource = project.Var("cookiesSource");
+                    var httpLog = new
+                    {
+                        timestamp = DateTime.UtcNow.AddHours(-5).ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                        method = method,
+                        url = url,
+                        statusCode = statusCode,
+                        durationMs = durationMs,
+
+                        request = new
+                        {
+                            headers = safeHeaders,
+                            cookies = safeCookies,
+                            cookiesSource = cookiesSource,
+                            body = safeBody,
+                            proxy = MaskProxyCredentials(proxy),
+
+                        },
+
+                        response = new
+                        {
+                            body = safeResponse  
+                        },
+
+                        machine = Environment.MachineName,
+                        project = project.Name.Replace(".zp", ""),
+                        account = project.Var("acc0") ?? "",
+                        session = project.Var("varSessionId") ?? "",
+                        port = project.Var("port") ?? "",
+                        pid = project.Var("pid") ?? ""
+                    };
+
+                    string json = JsonConvert.SerializeObject(httpLog);
+
+                    string logHost = !string.IsNullOrEmpty(project.GVar("logHost")) 
+                        ? project.GVar("logHost").Replace("/log", "/http-log")
+                        : "http://localhost:10993/http-log";
+
+                    using (var cts = new CancellationTokenSource(2000))
+                    using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
+                    {
+                        await _httpLogClient.PostAsync(logHost, content, cts.Token);
+                    }
+                }
+                catch { }
+            });
+        }
+        
+        private static string[] MaskSensitiveHeaders(string[] headers)
+        {
+            if (headers == null) return new string[0];
+
+            var sensitiveKeys = new[] { "authorization", "cookie", "x-api-key", "api-key", "token" };
+            var masked = new List<string>();
+
+            foreach (var header in headers)
+            {
+                if (string.IsNullOrWhiteSpace(header)) continue;
+
+                var colonIndex = header.IndexOf(':');
+                if (colonIndex == -1)
+                {
+                    masked.Add(header);
+                    continue;
+                }
+
+                var key = header.Substring(0, colonIndex).Trim().ToLower();
+
+                if (sensitiveKeys.Any(k => key.Contains(k)))
+                {
+                    masked.Add($"{header.Substring(0, colonIndex)}: ***MASKED***");
+                }
+                else
+                {
+                    masked.Add(header);
+                }
+            }
+
+            return masked.ToArray();
+        }
+        private static string MaskSensitiveData(string data)
+        {
+            if (string.IsNullOrEmpty(data)) return "";
+            if (data.Length > 100) return data.Substring(0, 100) + "... [TRUNCATED]";
+            return data;
+        }
+
+        private static string MaskProxyCredentials(string proxy)
+        {
+            if (string.IsNullOrEmpty(proxy)) return "";
+    
+            try
+            {
+                if (proxy.Contains("@"))
+                {
+                    var parts = proxy.Split('@');
+                    if (parts.Length == 2)
+                    {
+                        return $"***:***@{parts[1]}";
+                    }
+                }
+            }
+            catch { }
+    
+            return proxy;
+        }
+        
+        private static string TruncateBody(string body, int maxLength)
+        {
+            if (string.IsNullOrEmpty(body)) return "";
+            if (body.Length <= maxLength) return body;
+            return body.Substring(0, maxLength) + $"\n\n... [TRUNCATED - {body.Length} bytes]";
+        }
+        #endregion
+        
+        
+        private static readonly object LockObject = new object();
+        
         private static string GetCookiesForRequest(IZennoPosterProjectModel project, string url)
         {
             string cookiesJson = project.Var("cookies");
-    
+            project.Context["cookiesSource"] = "var";
             if (string.IsNullOrEmpty(cookiesJson))
             {
                 string cookiesBase64 = project.DbGet("cookies", "_instance");
@@ -23,14 +183,15 @@ namespace z3nCore
                 {
                     cookiesJson = cookiesBase64.FromBase64();
                     project.Var("cookies",cookiesJson);
+                    project.Context["cookiesSource"] = "db";
                 }
             }
-    
+            
             if (string.IsNullOrEmpty(cookiesJson))
             {
+                project.Context["cookiesSource"] = "null";
                 return null;
             }
-    
             string domain = ExtractDomain(url);
             if (string.IsNullOrEmpty(domain))
             {
@@ -117,22 +278,17 @@ namespace z3nCore
             string cookies = null,
             bool log = false,
             bool parse = false,
-            bool parseJson = false,
             int deadline = 30,
             bool thrw = false,
             bool useNetHttp = false,
-            bool returnSuccessWithStatus = false)  // ← НОВЫЙ ПАРАМЕТР
+            bool returnSuccessWithStatus = false,
+            bool bodyOnly = false) 
         {
             if (project == null) throw new ArgumentNullException(nameof(project));
-            if (parseJson)
-            {
-                parse = parseJson;
-                project.warn("using obsolete parameter \"parseJson\", change to \"parse\" ASAP");
-            }
-
+            
             var logger = new Logger(project, log, classEmoji: "↑↓");
             string debugProxy = proxy;
-
+            DateTime startTime = DateTime.UtcNow;
             try
             {
                 string body;
@@ -160,9 +316,29 @@ namespace z3nCore
                         cookies,
                         deadline, 
                         logger, 
-                        out statusCode);
+                        out statusCode,
+                        bodyOnly);
                 }
+                DateTime endTime = DateTime.UtcNow;
+                
 
+                
+
+                
+                LogHttpTransaction(
+                    project, 
+                    "GET", 
+                    url, 
+                    "",              
+                    headers,         
+                    cookies,         
+                    proxy,
+                    body,            
+                    statusCode,
+                    startTime, 
+                    endTime
+                );
+                
                 if (log)
                 {
                     LogStatus(logger, statusCode, url, debugProxy);
@@ -214,11 +390,13 @@ namespace z3nCore
             string cookies,
             int deadline,
             Logger logger,
-            out int statusCode)
+            out int statusCode,
+            bool bodyOnly = false)
         {
             string fullResponse;
-            
-            bool useCookieContainer; // ← Объяви ТУТ
+            ResponceType rt = bodyOnly ? ResponceType.BodyOnly : ResponceType.HeaderAndBody;
+
+            bool useCookieContainer; 
     
      
             
@@ -226,6 +404,7 @@ namespace z3nCore
             {
                 cookies = "";
                 useCookieContainer = false;
+                project.Context["cookiesSource"] = "null";
             }
             else
             {
@@ -234,8 +413,10 @@ namespace z3nCore
                     cookies = GetCookiesForRequest(project, url);
                 }
                 useCookieContainer = string.IsNullOrEmpty(cookies);
+                
             }
-            
+            if (useCookieContainer)
+                project.Context["cookiesSource"] = "container";
             lock (LockObject)
             {
                 string proxyString = ParseProxy(project, proxy, logger);
@@ -248,7 +429,7 @@ namespace z3nCore
                     contentType,
                     proxyString,
                     "UTF-8",
-                    ResponceType.HeaderAndBody,
+                    rt,
                     deadline * 1000,
                     cookies ?? "",
                     userAgent,
@@ -334,22 +515,17 @@ namespace z3nCore
             string cookies = null,
             bool log = false,
             bool parse = false,
-            bool parseJson = false,
             int deadline = 30,
             bool thrw = false,
             bool useNetHttp = false,
-            bool returnSuccessWithStatus = false) // ← НОВЫЙ ПАРАМЕТР
+            bool returnSuccessWithStatus = false,
+            bool bodyOnly = false)  
         {
             if (project == null) throw new ArgumentNullException(nameof(project));
-            if (parseJson)
-            {
-                parse = parseJson;
-                project.warn("using obsolete parameter \"parseJson\", change to \"parse\" ASAP");
-            }
-
+            
             var logger = new Logger(project, log, classEmoji: "↑↓");
             string debugProxy = proxy;
-
+            DateTime startTime = DateTime.UtcNow;
             try
             {
                 string responseBody;
@@ -379,9 +555,27 @@ namespace z3nCore
                         cookies,
                         deadline,
                         logger,
-                        out statusCode);
+                        out statusCode,
+                        bodyOnly);
                 }
-
+                DateTime endTime = DateTime.UtcNow;
+                
+                LogHttpTransaction(
+                    project, 
+                    "POST", 
+                    url, 
+                    body,            // request body
+                    headers,         // request headers
+                    cookies,         // request cookies
+                    proxy,
+                    responseBody,    // response body
+                    statusCode,
+                    startTime, 
+                    endTime
+                );
+                
+                
+                
                 if (log)
                 {
                     LogStatus(logger, statusCode, url, debugProxy);
@@ -433,13 +627,14 @@ namespace z3nCore
             string cookies,
             int deadline,
             Logger logger,
-            out int statusCode)
+            out int statusCode,
+            bool bodyOnly = false)
         {
             string fullResponse;
-            
+            ResponceType rt = bodyOnly ? ResponceType.BodyOnly : ResponceType.HeaderAndBody;
             bool useCookieContainer; 
     
-            if (cookies == "-" ||!project.IsAccount())            {
+            if (cookies == "-" ||!project.IsAccount()) {
                 cookies = "";
                 useCookieContainer = false;
             }
@@ -464,7 +659,7 @@ namespace z3nCore
                     contentType,
                     proxyString,
                     "UTF-8",
-                    ResponceType.HeaderAndBody,
+                    rt,
                     deadline * 1000,
                     cookies ?? "",
                     userAgent,
@@ -1276,6 +1471,8 @@ namespace z3nCore
             return cookie;
         }
 
+
+        
     }
 
     public static partial class ProjectExtensions

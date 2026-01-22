@@ -15,6 +15,7 @@
         <Compile Remove="Sql\Sql.cs" />
         <Compile Remove="Sql\TaskManager.cs" />
         <Compile Remove="Sql\**" />
+        <Compile Remove="Requests\Requests.cs" />
     </ItemGroup>
 
     <ItemGroup>
