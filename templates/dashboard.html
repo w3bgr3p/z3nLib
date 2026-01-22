@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
-    <title>z3nTray | Live Logs</title>
+    <title>z3nFarm | Unified Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -14,240 +13,442 @@
         body {
             background: #0d1117;
             color: #c9d1d9;
-            font-family: 'Iosevka', 'Monaco', monospace;
-            font-size: 11px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 12px;
             overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        h1,
-        .stats {
-            display: none;
+        .main-header {
+            background: #161b22;
+            padding: 12px 16px;
+            border-bottom: 1px solid #30363d;
+            flex-shrink: 0;
+        }
+
+        .main-header h1 {
+            font-size: 18px;
+            color: #58a6ff;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 8px;
+            padding: 8px;
+        }
+
+        .panel {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .panel-header {
+            background: #161b22;
+            padding: 10px 12px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            font-size: 11px;
+        }
+
+        .stat-item {
+            display: flex;
+            gap: 2px;
+        }
+
+        .stat-label {
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            color: #58a6ff;
+            font-size: 14px;
         }
 
         .controls {
             background: #161b22;
-            padding: 5px;
-            margin: 10px;
-            border-radius: 4px;
+            padding: 6px 10px;
+            border-bottom: 1px solid #30363d;
             display: flex;
-            gap: 5px;
+            gap: 6px;
             flex-wrap: wrap;
-            position: sticky;
-            top: 0;
-            z-index: 100;
             flex-shrink: 0;
         }
 
         .controls select,
         .controls input,
         .controls button {
-            padding: 2px 8px;
+            padding: 4px 10px;
             font-size: 11px;
+            background: #0d1117;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-family: inherit;
         }
 
         .controls button {
-            background: #238636;
+           
+            border-color: rgba(240, 246, 252, 0.1);
+            color: #ffffff;
             cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
         }
 
         .controls button:hover {
             background: #2ea043;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+        .controls button.danger {
+            background: #da3633;
+            border-color: rgba(248, 81, 73, 0.4);
         }
 
-        .stat-card {
-            background: #161b22;
-            padding: 15px;
-            border-radius: 6px;
-            border-left: 3px solid #58a6ff;
+        .controls button.danger:hover {
+            background: #e64845;
         }
 
-        .stat-card h3 {
-            font-size: 14px;
-            color: #8b949e;
-            margin-bottom: 8px;
-        }
-
-        .stat-card .value {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .logs-container {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            margin: 0 10px 10px 10px;
+        .content-area {
             flex: 1;
             overflow-y: auto;
-            overflow-x: hidden;
+            min-height: 0;
         }
 
-        .log-entry {
-            padding: 2px 8px;
-            border-left: 2px solid #555;
-            background: #0d1117;
+        .request-item {
+            padding: 6px 12px;
             border-bottom: 1px solid #21262d;
-            line-height: 1.2;
-        }
-
-        .log-header {
-            display: flex;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: grid;
+            grid-template-columns: 70px 55px 1fr 55px 70px 65px 90px;
             gap: 6px;
-            align-items: baseline;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .request-item:hover {
+            background: #161b22;
+        }
+
+        .method {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .method.GET { background: rgba(88, 166, 255, 0.15); color: #79c0ff; }
+        .method.POST { background: rgba(63, 185, 80, 0.15); color: #56d364; }
+        .method.PUT { background: rgba(210, 153, 34, 0.15); color: #f0883e; }
+        .method.DELETE { background: rgba(248, 81, 73, 0.15); color: #ff7b72; }
+
+        .status {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .status.s2xx { background: rgba(63, 185, 80, 0.15); color: #56d364; }
+        .status.s3xx { background: rgba(88, 166, 255, 0.15); color: #79c0ff; }
+        .status.s4xx { background: rgba(210, 153, 34, 0.15); color: #f0883e; }
+        .status.s5xx { background: rgba(248, 81, 73, 0.15); color: #ff7b72; }
+
+        .url {
+            overflow: hidden;
+            text-overflow: ellipsis;
             white-space: nowrap;
+            color: #c9d1d9;
         }
 
-        .log-entry:hover {
-            background: #1c2128;
-        }
-
-        .log-entry.ERROR {
-            border-left-color: #f85149;
-            background: #2d1311;
-        }
-
-        .log-entry.WARN {
-            border-left-color: #d29922;
-        }
-
-        .level.ERROR {
-            color: #f85149;
-        }
-
-        .level.WARNING {
-            color: #d29922;
-        }
-
-        .level.INFO {
-            color: #58a6ff;
+        .duration {
+            color: #8b949e;
+            font-family: monospace;
+            font-size: 10px;
+            text-align: right;
         }
 
         .timestamp {
-            color: #8b949e;
-        }
-
-        .machine {
-            color: #79c0ff;
-            background: #1f6feb20;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-
-        .project {
-            color: #a371f7;
-            background: #8957e520;
-            padding: 2px 6px;
-            border-radius: 3px;
+            color: #7d8590;
+            font-family: monospace;
+            font-size: 10px;
         }
 
         .account {
             color: #7ee787;
-        }
-        
-        .session {
-            color: #8b949e;
-            padding: 2px 6px;
-            border-radius: 3px;
+            font-size: 10px;
         }
 
-        .port {
-            color: #8b949e;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-
-        .pid {
-            color: #8b949e;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-
-        .level {
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-
-        .level.ERROR {
-            background: #da363320;
-            color: #f85149;
-        }
-
-        .level.WARNING {
-            background: #bb800920;
-            color: #d29922;
-        }
-
-        .level.INFO {
-            background: #1f6feb20;
-            color: #58a6ff;
-        }
-
-        .level.SUCCESS {
-            background: #23863620;
-            color: #3fb950;
-        }
-
-        .message {
-            cursor: copy;
+        .cookie-source {
+            font-size: 9px;
             padding: 2px 4px;
+            background: #21262d;
             border-radius: 3px;
-            transition: background 0.2s;
-            word-break: break-all; /* Чтобы длинные ошибки не ломали верстку */
-        }
-
-        .message:hover {
-            background: #30363d;
-            color: #ffffff;
-        }
-
-        .extra {
-            margin-top: 8px;
-            background: #0d1117;
-            padding: 8px;
-            border-radius: 3px;
-            font-size: 12px;
             color: #8b949e;
-            overflow-x: auto;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .log-entry {
+            padding: 6px 12px;
+            border-left: 3px solid transparent;
+            background: #0d1117;
+            border-bottom: 1px solid #21262d;
+            line-height: 1.5;
+            transition: background 0.15s;
         }
 
         .log-header {
             display: flex;
+            gap: 8px;
             align-items: center;
-            gap: 10px;
-            width: 100%;
+            white-space: nowrap;
+            flex-wrap: wrap;
         }
 
-        .machine,
-        .project,
-        .account,
-        .level,
-        .session,
-        .port,
-        .pid {
+        .log-entry:hover {
+            background: #161b22;
+        }
+
+        .log-entry.ERROR {
+            border-left-color: #f85149;
+            background: #1c1214;
+        }
+
+        .log-entry.ERROR:hover {
+            background: #23161a;
+        }
+
+        .log-entry.WARNING {
+            border-left-color: #d29922;
+        }
+
+        .machine {
+            color: #58a6ff;
+            background: rgba(56, 139, 253, 0.15);
+            padding: 1px 4px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 500;
+            border: 1px solid rgba(56, 139, 253, 0.4);
             cursor: pointer;
-            transition: opacity 0.2s;
         }
 
-        .machine:hover,
-        .project:hover,
-        .account:hover,
-        .level:hover,
-        .session:hover,
-        .port:hover,
-        .pid:hover {
-            opacity: 0.7;
-            text-decoration: underline;
+        .project {
+            color: #a371f7;
+            background: rgba(163, 113, 247, 0.15);
+            padding: 1px 4px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 500;
+            border: 1px solid rgba(163, 113, 247, 0.4);
+            cursor: pointer;
         }
+
+        .level {
+            padding: 1px 4px;
+            border-radius: 6px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-family: ui-monospace, monospace;
+            cursor: pointer;
+        }
+
+        .level.ERROR {
+            background: rgba(248, 81, 73, 0.15);
+            color: #ff7b72;
+            border: 1px solid rgba(248, 81, 73, 0.4);
+        }
+
+        .level.WARNING {
+            background: rgba(210, 153, 34, 0.15);
+            color: #f0883e;
+            border: 1px solid rgba(210, 153, 34, 0.4);
+        }
+
+        .level.INFO {
+            background: rgba(56, 139, 253, 0.15);
+            color: #79c0ff;
+            border: 1px solid rgba(56, 139, 253, 0.4);
+        }
+
+        .level.SUCCESS {
+            background: rgba(63, 185, 80, 0.15);
+            color: #56d364;
+            border: 1px solid rgba(63, 185, 80, 0.4);
+        }
+
+        .message {
+            cursor: copy;
+            padding: 4px 0;
+            margin-top: 4px;
+            border-radius: 3px;
+            transition: background 0.15s;
+            word-break: break-word;
+            color: #c9d1d9;
+            line-height: 1.5;
+            font-size: 11px;
+        }
+
+        .message:hover {
+            background: rgba(110, 118, 129, 0.1);
+            padding: 4px 6px;
+        }
+
+        .session, .port, .pid {
+            color: #7d8590;
+            font-size: 10px;
+            font-family: ui-monospace, monospace;
+            cursor: pointer;
+        }
+        .copy-btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .copy-btn:hover {
+            background: #30363d;
+        }
+
+
+/* Стили для панели деталей (аналогично первому дашборду) */
+.details-panel {
+    position: absolute;
+    right: 8px;
+    top: 50px;
+    bottom: 8px;
+    width: 500px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    display: none; /* По умолчанию скрыта */
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+}
+
+.details-panel.visible { display: flex; }
+
+.details-header {
+    padding: 12px;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tabs {
+    display: flex;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+}
+
+.tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-size: 12px;
+}
+
+.tab.active {
+    border-bottom-color: #58a6ff;
+    color: #58a6ff;
+}
+
+.tab-content { flex: 1; overflow-y: auto; padding: 12px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.code-block {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-top: 5px;
+}
+
+.info-grid { display: grid; gap: 8px; }
+.info-row { display: grid; grid-template-columns: 100px 1fr; gap: 8px; }
+.info-label { color: #8b949e; }
+.header-item { display: grid; grid-template-columns: 140px 1fr; border-bottom: 1px solid #21262d; padding: 4px 0; }
+.header-key { color: #7ee787; font-family: monospace; }
+
+
+.header-list {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+.header-item {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    border-bottom: 1px solid #21262d;
+    padding: 6px 12px;
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.header-item:last-child {
+    border-bottom: none;
+}
+
+.header-key {
+    color: #7ee787;
+    font-family: monospace;
+}
+
+.header-value {
+    color: #c9d1d9;
+    word-break: break-all;
+}
+
+
+
+
+
 
         ::-webkit-scrollbar {
             width: 10px;
@@ -260,118 +461,303 @@
 
         ::-webkit-scrollbar-thumb {
             background: #30363d;
-            border-radius: 5px;
+            border-radius: 6px;
+            border: 2px solid #0d1117;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
         }
     </style>
 </head>
-
 <body>
-<h1>🔥 z3nTray Live Logs</h1>
 
-<div class="stats" id="stats"></div>
 
-<div class="controls">
-    <select id="levelFilter" onchange="refresh()">
-        <option value="">All Levels</option>
-        <option value="ERROR">🔴 Errors</option>
-        <option value="WARNING">🟡 Warnings</option>
-        <option value="INFO">🔵 Info</option>
-        <option value="SUCCESS">🟢 Success</option>
-    </select>
 
-    <select id="machineFilter" onchange="refresh()">
-        <option value="">All Machines</option>
-    </select>
+        <div class="dashboard-container">
 
-    <select id="projectFilter" onchange="refresh()">
-        <option value="">All Projects</option>
-    </select>
+                <!-- LIVE LOGS PANEL (RIGHT) -->
+            <div class="panel">
+                
 
-    <select id="sessionFilter" onchange="refresh()">
-        <option value="">All Sessions</option>
-    </select>
+                <div class="controls">
+                    <span class="panel-title">📋 </span>
+                    <div class="control-row">
+                        <button onclick="refreshLogs()">🔄</button>
+                        <button onclick="toggleLogsAutoRefresh()">⏸️ <span id="logsAutoStatus">ON</span></button>
+                        <button onclick="clearLogsFilters()">✖️</button>
+                        <button onclick="clearLogsServer()" class="danger">🗑️</button>
+                    </div>
 
-    <select id="portFilter" onchange="refresh()">
-        <option value="">All Ports</option>
-    </select>
+                    <div class="control-row">
+                        <select id="logsLevelFilter" onchange="refreshLogs()">
+                            <option value="">All Levels</option>
+                            <option value="ERROR">ERROR</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="INFO">INFO</option>
+                            <option value="SUCCESS">SUCCESS</option>
+                        </select>
+                        <select id="logsMachineFilter" onchange="refreshLogs()"><option value="">All Machines</option></select>
+                        <select id="logsProjectFilter" onchange="refreshLogs()"><option value="">All Projects</option></select>
+                        <select id="logsSessionFilter" onchange="refreshLogs()"><option value="">Sessions</option></select>
+                        <select id="logsPortFilter" onchange="refreshLogs()"><option value="">Ports</option></select>
+                        <select id="logsPidFilter" onchange="refreshLogs()"><option value="">PIDs</option></select>
+                        <input type="number" id="logsLimitInput" value="100" min="10" max="500" step="10" style="width: 60px;" onchange="refreshLogs()">
+                    </div>
+                </div>
+            <div class="content-area" id="logsContainer"></div>
+        </div>
 
-    <select id="pidFilter" onchange="refresh()">
-        <option value="">All PIDs</option>
-    </select>
+        <!-- HTTP TRAFFIC PANEL (LEFT) -->
+            <div class="panel">
 
-    <input type="number" id="limitInput" value="200" min="10" max="1000" step="10" onchange="refresh()">
 
-    <button onclick="refresh()">🔄 Refresh</button>
-    <button onclick="toggleAutoRefresh()">⏸️ Auto: <span id="autoStatus">ON</span></button>
-    <button onclick="clearFilters()">✖️ Reset Filters</button>
-    <button onclick="clearLogServer()" style="background: #da3633;">🗑️ Clear Logs</button>
+
+
+                <div class="controls">
+                    <span class="panel-title">🌐 </span>
+                   
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-label">Total: </span>
+                        <span class="stat-value" id="httpTotalRequests">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Success: </span>
+                        <span class="stat-value" style="color: #56d364;" id="httpSuccessRate">0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Avg:  </span>
+                        <span class="stat-value" id="httpAvgTime">0ms</span>
+                    </div>
+                </div>
+
+                    <div class="control-row">
+                        <button onclick="refreshHttp()">🔄</button>
+                            <button onclick="toggleHttpAutoRefresh()">⏸️ <span id="httpAutoStatus">ON</span></button>
+                            <button onclick="clearHttpFilters()">✖️</button>
+                            <button onclick="clearHttpLogs()" class="danger">🗑️</button>
+                    </div>
+
+                    <div class="control-row">
+                        <select id="httpMethodFilter" onchange="refreshHttp()">
+                            <option value="">All Methods</option>
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="DELETE">DELETE</option>
+                            </select>
+                            <select id="httpStatusFilter" onchange="refreshHttp()">
+                            <option value="">All Status</option>
+                            <option value="2">2xx</option>
+                            <option value="3">3xx</option>
+                            <option value="4">4xx</option>
+                            <option value="5">5xx</option>
+                        </select>
+
+                        <input type="text" id="httpUrlFilter" placeholder="URL filter..." onkeyup="refreshHttp()" style="min-width: 120px;">
+                        <select id="httpMachineFilter" onchange="refreshHttp()"><option value="">All Machines</option></select>
+                        <select id="httpProjectFilter" onchange="refreshHttp()"><option value="">All Projects</option></select>
+                        <select id="httpCookieSourceFilter" onchange="refreshHttp()">
+    
+                            <option value="">Cookie Src</option><option value="db">DB</option>
+                            <option value="var">Var</option>
+                            <option value="container">Container</option>
+                            <option value="not-set">Not Set</option>
+                        </select>
+                        <select id="httpAccountFilter" onchange="refreshHttp()">
+                            <option value="">All Accounts</option>
+                        </select>
+
+                        <input type="number" id="httpLimitInput" value="100" min="10" max="500" step="10" style="width: 60px;" onchange="refreshHttp()">
+                    </div>
+                </div>
+
+
+
+        <div class="content-area" id="httpRequestsList"></div>
+    </div>
+
 </div>
 
-<div class="logs-container" id="logs"></div>
+<div class="details-panel" id="detailsPanel">
+    <div class="details-header">
+        <span class="details-title">Request Details</span>
+        <button class="close-btn" onclick="closeDetails()" style="background:none; border:none; color:#8b949e; cursor:pointer; font-size:20px;">×</button>
+    </div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('overview')">Overview</div>
+        <div class="tab" onclick="switchTab('request')">Request</div>
+        <div class="tab" onclick="switchTab('response')">Response</div>
+    </div>
+    <div class="tab-content">
+        <div id="overview" class="tab-panel active"></div>
+        <div id="request" class="tab-panel"></div>
+        <div id="response" class="tab-panel"></div>
+    </div>
+</div>
+
+
+
 
 <script>
     const SERVER = window.location.origin;
-    let autoRefresh = true;
-    let autoRefreshInterval = null;
+    
+    // HTTP Traffic variables
+    let httpAutoRefresh = true;
+    let httpAutoRefreshInterval = null;
+    let currentHttpLogs = [];
 
-    async function loadStats() {
-        try {
-            const response = await fetch(`${SERVER}/stats`);
-            const stats = await response.json();
-            updateFilters(stats);
-        } catch (e) { console.error('Stats failed:', e); }
+    // Logs variables
+    let logsAutoRefresh = true;
+    let logsAutoRefreshInterval = null;
+
+    // ===== HTTP TRAFFIC FUNCTIONS =====
+async function refreshHttp() {
+    const method = document.getElementById('httpMethodFilter').value;
+    const status = document.getElementById('httpStatusFilter').value;
+    const url = document.getElementById('httpUrlFilter').value;
+    const machine = document.getElementById('httpMachineFilter').value;
+    const project = document.getElementById('httpProjectFilter').value;
+    const cookieSource = document.getElementById('httpCookieSourceFilter').value;
+    const account = document.getElementById('httpAccountFilter')?.value || '';
+    const limit = document.getElementById('httpLimitInput').value;
+
+    let apiUrl = `${SERVER}/http-logs?limit=${limit}`;
+    if (method) apiUrl += `&method=${method}`;
+    if (status) apiUrl += `&status=${status}`;
+    if (url) apiUrl += `&url=${encodeURIComponent(url)}`;
+    if (machine) apiUrl += `&machine=${encodeURIComponent(machine)}`;
+    if (project) apiUrl += `&project=${encodeURIComponent(project)}`;
+    if (cookieSource) apiUrl += `&cookiesSource=${encodeURIComponent(cookieSource)}`;
+    if (account) apiUrl += `&account=${encodeURIComponent(account)}`;
+
+    try {
+        const response = await fetch(apiUrl);
+        currentHttpLogs = await response.json();
+        renderHttpRequests(currentHttpLogs);
+        await updateHttpStats();
+    } catch (e) {
+        console.error('HTTP refresh failed:', e);
+    }
+}
+
+    function renderHttpRequests(logs) {
+        const container = document.getElementById('httpRequestsList');
+        container.innerHTML = logs.map((log, idx) => {
+            const method = log.method || 'GET';
+            const url = log.url || '';
+            const statusCode = log.statusCode || 0;
+            const duration = log.durationMs ? `${log.durationMs}ms` : '-';
+            const cSrc = (log.request && log.request.cookiesSource) ? log.request.cookiesSource : '-';
+            
+            const statusClass = statusCode >= 200 && statusCode < 300 ? 's2xx' :
+                                statusCode >= 300 && statusCode < 400 ? 's3xx' :
+                                statusCode >= 400 && statusCode < 500 ? 's4xx' : 's5xx';
+
+            const time = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '--:--:--';
+
+            return `
+                <div class="request-item"onclick="showDetails(${idx})">
+                    <span class="timestamp">${time}</span>
+                    <span class="method ${method}">${method}</span>
+                    <span class="url" title="${escapeHtml(url)}">${escapeHtml(url)}</span>
+                    <span class="status ${statusClass}">${statusCode}</span>
+                    <span class="duration">${duration}</span>
+                    <span class="cookie-source">${cSrc}</span>
+                    <span class="account">${log.account || '-'}</span>
+                </div>
+            `;
+        }).join('');
     }
 
-    function updateFilters(stats) {
-        const mFilter = document.getElementById('machineFilter');
-        const pFilter = document.getElementById('projectFilter');
-        const sFilter = document.getElementById('sessionFilter');
-        const portFilter = document.getElementById('portFilter');
-        const pidFilter = document.getElementById('pidFilter');
+    async function updateHttpStats() {
+    try {
+        const response = await fetch(`${SERVER}/http-stats`);
+        const stats = await response.json();
 
-        const curM = mFilter.value;
-        const curP = pFilter.value;
-        const curS = sFilter.value;
-        const curPort = portFilter.value;
-        const curPid = pidFilter.value;
+        document.getElementById('httpTotalRequests').textContent = stats.totalRequests;
+
+        const success = stats.byStatus['2xx'] || 0;
+        const successRate = stats.totalRequests > 0 ? Math.round((success / stats.totalRequests) * 100) : 0;
+        document.getElementById('httpSuccessRate').textContent = successRate + '%';
+        document.getElementById('httpAvgTime').textContent = stats.avgDurationMs + 'ms';
+
+        const machineFilter = document.getElementById('httpMachineFilter');
+        const projectFilter = document.getElementById('httpProjectFilter');
+        const accountFilter = document.getElementById('httpAccountFilter');
+        
+        const curMachine = machineFilter.value;
+        const curProject = projectFilter.value;
+        const curAccount = accountFilter?.value || '';
 
         if (stats.byMachine) {
-            mFilter.innerHTML = '<option value="">All Machines</option>' +
-                Object.keys(stats.byMachine).map(m => `<option value="${m}" ${m === curM ? 'selected' : ''}>${m}</option>`).join('');
+            machineFilter.innerHTML = '<option value="">All Machines</option>' +
+                Object.keys(stats.byMachine).map(m =>
+                    `<option value="${m}" ${m === curMachine ? 'selected' : ''}>${m}</option>`
+                ).join('');
         }
+
         if (stats.byProject) {
-            pFilter.innerHTML = '<option value="">All Projects</option>' +
-                Object.keys(stats.byProject).map(p => `<option value="${p}" ${p === curP ? 'selected' : ''}>${p}</option>`).join('');
+            projectFilter.innerHTML = '<option value="">All Projects</option>' +
+                Object.keys(stats.byProject).map(p =>
+                    `<option value="${p}" ${p === curProject ? 'selected' : ''}>${p}</option>`
+                ).join('');
         }
-        if (stats.bySession) {
-            const sessionKeys = Object.keys(stats.bySession);
-            sessionKeys.sort((a, b) => b - a);
-            sFilter.innerHTML = '<option value="">All Sessions</option>' +
-                sessionKeys.map(s => `<option value="${s}" ${s === curS ? 'selected' : ''}>${s}</option>`).join('');
+
+        if (stats.byAccount && accountFilter) {
+            accountFilter.innerHTML = '<option value="">All Accounts</option>' +
+                Object.keys(stats.byAccount).map(a =>
+                    `<option value="${a}" ${a === curAccount ? 'selected' : ''}>${a}</option>`
+                ).join('');
         }
-        if (stats.byPort) {
-            const portKeys = Object.keys(stats.byPort);
-            portKeys.sort();
-            portFilter.innerHTML = '<option value="">All Ports</option>' +
-                portKeys.map(p => `<option value="${p}" ${p === curPort ? 'selected' : ''}>${p}</option>`).join('');
-        }
-        if (stats.byPid) {
-            const pidKeys = Object.keys(stats.byPid);
-            pidKeys.sort((a, b) => b - a);
-            pidFilter.innerHTML = '<option value="">All PIDs</option>' +
-                pidKeys.map(p => `<option value="${p}" ${p === curPid ? 'selected' : ''}>${p}</option>`).join('');
+    } catch (e) {
+        console.error('HTTP stats update failed:', e);
+    }
+}
+
+    function toggleHttpAutoRefresh() {
+        httpAutoRefresh = !httpAutoRefresh;
+        document.getElementById('httpAutoStatus').textContent = httpAutoRefresh ? 'ON' : 'OFF';
+        if (httpAutoRefresh) {
+            httpAutoRefreshInterval = setInterval(refreshHttp, 3000);
+        } else {
+            clearInterval(httpAutoRefreshInterval);
         }
     }
 
-    async function refresh() {
-        const level = document.getElementById('levelFilter').value;
-        const machine = document.getElementById('machineFilter').value;
-        const project = document.getElementById('projectFilter').value;
-        const session = document.getElementById('sessionFilter').value;
-        const port = document.getElementById('portFilter').value;
-        const pid = document.getElementById('pidFilter').value;
-        const limit = document.getElementById('limitInput').value;
-        console.log('Selected level:', level);
+function clearHttpFilters() {
+    document.getElementById('httpMethodFilter').value = '';
+    document.getElementById('httpStatusFilter').value = '';
+    document.getElementById('httpUrlFilter').value = '';
+    document.getElementById('httpMachineFilter').value = '';
+    document.getElementById('httpProjectFilter').value = '';
+    document.getElementById('httpCookieSourceFilter').value = '';
+    const accountFilter = document.getElementById('httpAccountFilter');
+    if (accountFilter) accountFilter.value = '';
+    refreshHttp();
+}
+
+    async function clearHttpLogs() {
+        if (!confirm('Delete all HTTP logs?')) return;
+        try {
+            await fetch(`${SERVER}/clear-http`, { method: 'POST' });
+            refreshHttp();
+        } catch (e) {
+            console.error('Clear failed:', e);
+        }
+    }
+
+    // ===== LIVE LOGS FUNCTIONS =====
+    async function refreshLogs() {
+        const level = document.getElementById('logsLevelFilter').value;
+        const machine = document.getElementById('logsMachineFilter').value;
+        const project = document.getElementById('logsProjectFilter').value;
+        const session = document.getElementById('logsSessionFilter').value;
+        const port = document.getElementById('logsPortFilter').value;
+        const pid = document.getElementById('logsPidFilter').value;
+        const limit = document.getElementById('logsLimitInput').value;
+
         let url = `${SERVER}/logs?limit=${limit}`;
         if (level) url += `&level=${level}`;
         if (machine) url += `&machine=${encodeURIComponent(machine)}`;
@@ -383,68 +769,115 @@
         try {
             const response = await fetch(url);
             const logs = await response.json();
+            renderLogs(logs);
+            await updateLogsFilters();
+        } catch (e) {
+            console.error('Logs refresh failed:', e);
+        }
+    }
 
-            const container = document.getElementById('logs');
-            container.innerHTML = logs.map(log => {
-                const extraStr = log.extra ? JSON.stringify(log.extra) : '';
-                return `
-                    <div class="log-entry ${log.level}">
-                        <div class="log-header">
-                            <span class="timestamp">${new Date(log.timestamp).toLocaleTimeString()}</span>
-                            <span class="machine" onclick="setFilter('machineFilter', '${log.machine}')">[${log.machine}]</span>        
-                            <span class="project" onclick="setFilter('projectFilter', '${log.project}')">${log.project}</span>        
-                            <span class="level ${log.level}" onclick="setFilter('levelFilter', '${log.level}')">${log.level}</span>      
-                            <span class="account">${log.account}</span>          
-                            <span style="color: #6e7681; font-size: 11px;">${extraStr}</span>
-                            <span class="session" onclick="setFilter('sessionFilter', '${log.session}')">session:${log.session}</span>
-                            <span class="port" onclick="setFilter('portFilter', '${log.port}')">port:${log.port}</span>
-                            <span class="pid" onclick="setFilter('pidFilter', '${log.pid}')">pid:${log.pid}</span>
-                        </div>
-                        <div class="message" onclick="copyToClipboard(this.innerText, this)" title="Click to copy">${escapeHtml(log.message)}</div>
+    function renderLogs(logs) {
+        const container = document.getElementById('logsContainer');
+        container.innerHTML = logs.map(log => {
+            const extraStr = log.extra ? JSON.stringify(log.extra) : '';
+            return `
+                <div class="log-entry ${log.level}">
+                    <div class="log-header">
+                        <span class="timestamp">${new Date(log.timestamp).toLocaleTimeString()}</span>
+                        <span class="machine" onclick="setLogsFilter('logsMachineFilter', '${log.machine}')">[${log.machine}]</span>
+                        <span class="project" onclick="setLogsFilter('logsProjectFilter', '${log.project}')">${log.project}</span>
+                        <span class="level ${log.level}" onclick="setLogsFilter('logsLevelFilter', '${log.level}')">${log.level}</span>
+                        <span class="account">${log.account}</span>
+                        <span style="color: #6e7681; font-size: 10px;">${extraStr}</span>
+                        <span class="session" onclick="setLogsFilter('logsSessionFilter', '${log.session}')">s:${log.session}</span>
+                        <span class="port" onclick="setLogsFilter('logsPortFilter', '${log.port}')">p:${log.port}</span>
+                        <span class="pid" onclick="setLogsFilter('logsPidFilter', '${log.pid}')">pid:${log.pid}</span>
                     </div>
-                    `;
-            }).join('');
-
-            await loadStats();
-        } catch (e) { console.error('Refresh failed:', e); }
+                    <div class="message" onclick="copyToClipboard(this.innerText, this)" title="Click to copy">${escapeHtml(log.message)}</div>
+                </div>
+            `;
+        }).join('');
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    async function updateLogsFilters() {
+        try {
+            const response = await fetch(`${SERVER}/stats`);
+            const stats = await response.json();
+
+            const mFilter = document.getElementById('logsMachineFilter');
+            const pFilter = document.getElementById('logsProjectFilter');
+            const sFilter = document.getElementById('logsSessionFilter');
+            const portFilter = document.getElementById('logsPortFilter');
+            const pidFilter = document.getElementById('logsPidFilter');
+
+            const curM = mFilter.value;
+            const curP = pFilter.value;
+            const curS = sFilter.value;
+            const curPort = portFilter.value;
+            const curPid = pidFilter.value;
+
+            if (stats.byMachine) {
+                mFilter.innerHTML = '<option value="">All Machines</option>' +
+                    Object.keys(stats.byMachine).map(m => `<option value="${m}" ${m === curM ? 'selected' : ''}>${m}</option>`).join('');
+            }
+            if (stats.byProject) {
+                pFilter.innerHTML = '<option value="">All Projects</option>' +
+                    Object.keys(stats.byProject).map(p => `<option value="${p}" ${p === curP ? 'selected' : ''}>${p}</option>`).join('');
+            }
+            if (stats.bySession) {
+                const sessionKeys = Object.keys(stats.bySession).sort((a, b) => b - a);
+                sFilter.innerHTML = '<option value="">Sessions</option>' +
+                    sessionKeys.map(s => `<option value="${s}" ${s === curS ? 'selected' : ''}>${s}</option>`).join('');
+            }
+            if (stats.byPort) {
+                const portKeys = Object.keys(stats.byPort).filter(p => p !== '').sort();
+                portFilter.innerHTML = '<option value="">Ports</option>' +
+                    portKeys.map(p => `<option value="${p}" ${p === curPort ? 'selected' : ''}>${p}</option>`).join('');
+            }
+            if (stats.byPid) {
+                const pidKeys = Object.keys(stats.byPid).filter(p => p !== '').sort((a, b) => b - a);
+                pidFilter.innerHTML = '<option value="">PIDs</option>' +
+                    pidKeys.map(p => `<option value="${p}" ${p === curPid ? 'selected' : ''}>${p}</option>`).join('');
+            }
+        } catch (e) {
+            console.error('Stats failed:', e);
+        }
     }
 
-    function toggleAutoRefresh() {
-        autoRefresh = !autoRefresh;
-        document.getElementById('autoStatus').textContent = autoRefresh ? 'ON' : 'OFF';
-        if (autoRefresh) autoRefreshInterval = setInterval(refresh, 3000);
-        else clearInterval(autoRefreshInterval);
+    function toggleLogsAutoRefresh() {
+        logsAutoRefresh = !logsAutoRefresh;
+        document.getElementById('logsAutoStatus').textContent = logsAutoRefresh ? 'ON' : 'OFF';
+        if (logsAutoRefresh) {
+            logsAutoRefreshInterval = setInterval(refreshLogs, 3000);
+        } else {
+            clearInterval(logsAutoRefreshInterval);
+        }
     }
 
-    function clearFilters() {
-        document.getElementById('levelFilter').value = '';
-        document.getElementById('machineFilter').value = '';
-        document.getElementById('projectFilter').value = '';
-        document.getElementById('sessionFilter').value = '';
-        document.getElementById('portFilter').value = '';
-        document.getElementById('pidFilter').value = '';
-        refresh();
+    function clearLogsFilters() {
+        document.getElementById('logsLevelFilter').value = '';
+        document.getElementById('logsMachineFilter').value = '';
+        document.getElementById('logsProjectFilter').value = '';
+        document.getElementById('logsSessionFilter').value = '';
+        document.getElementById('logsPortFilter').value = '';
+        document.getElementById('logsPidFilter').value = '';
+        refreshLogs();
     }
 
-    async function clearLogServer() {
-        if (!confirm("Удалить все логи с сервера?")) return;
+    async function clearLogsServer() {
+        if (!confirm('Delete all logs?')) return;
         try {
             await fetch(`${SERVER}/clear`, { method: 'POST' });
-            refresh();
-        } catch (e) { console.error('Clear failed:', e); }
+            refreshLogs();
+        } catch (e) {
+            console.error('Clear failed:', e);
+        }
     }
 
-    function setFilter(filterId, value) {
+    function setLogsFilter(filterId, value) {
         const filterElement = document.getElementById(filterId);
         if (filterElement) {
             filterElement.value = value;
-
             if (filterElement.value !== value) {
                 const opt = document.createElement('option');
                 opt.value = value;
@@ -452,22 +885,188 @@
                 filterElement.appendChild(opt);
                 filterElement.value = value;
             }
-
-            refresh();
+            refreshLogs();
         }
     }
+
     function copyToClipboard(text, element) {
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-        const originalBg = element.style.background;
-        element.style.background = "#23863640"; // Подсветка зеленым при копировании
-        setTimeout(() => { element.style.background = originalBg; }, 200);
-    });
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalBg = element.style.background;
+            element.style.background = "rgba(63, 185, 80, 0.2)";
+            setTimeout(() => { element.style.background = originalBg; }, 200);
+        });
+    }
+
+    // ===== UTILITY FUNCTIONS =====
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function truncate(str, len) {
+        if (str.length <= len) return str;
+        return str.substring(0, len) + '...';
+    }
+
+
+    let selectedRequest = null;
+
+function showDetails(idx) {
+    selectedRequest = currentHttpLogs[idx];
+    document.getElementById('detailsPanel').classList.add('visible');
+    renderOverview();
+    renderRequest();
+    renderResponse();
 }
 
-    refresh();
-    autoRefreshInterval = setInterval(refresh, 3000);
-</script>
-</body>
+function closeDetails() {
+    document.getElementById('detailsPanel').classList.remove('visible');
+}
 
+function switchTab(tabId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+}
+
+function renderOverview() {
+    if (!selectedRequest) return;
+    const div = document.getElementById('overview');
+    div.innerHTML = `
+        <div class="info-grid">
+            <div class="info-row"><span class="info-label">URL:</span><span class="info-value">${escapeHtml(selectedRequest.url)}</span></div>
+            <div class="info-row"><span class="info-label">Method:</span><span>${selectedRequest.method}</span></div>
+            <div class="info-row"><span class="info-label">Status:</span><span>${selectedRequest.statusCode}</span></div>
+            <div class="info-row"><span class="info-label">Machine:</span><span>${selectedRequest.machine}</span></div>
+            <div class="info-row"><span class="info-label">Project:</span><span>${selectedRequest.project}</span></div>
+            <div class="info-row"><span class="info-label">Account:</span><span>${selectedRequest.account}</span></div>
+            <div class="info-row"><span class="info-label">Cookie Src:</span><span style="color:#d29922">${selectedRequest.request?.cookiesSource || '-'}</span></div>
+
+        </div>
+        <button class="copy-btn" onclick="copyCurl()">📋 Copy as cURL</button>
+    `;
+}
+
+function renderRequest() {
+    if (!selectedRequest) return;
+    const r = selectedRequest.request;
+    const headers = r.headers || [];
+    const cookies = r.cookies || r.Cookies || "";
+    const body = r.body || "";
+    
+    // Парсим headers в таблицу
+    const headersHtml = headers.map(h => {
+        const colonIdx = h.indexOf(':');
+        const key = colonIdx > -1 ? h.substring(0, colonIdx) : h;
+        const value = colonIdx > -1 ? h.substring(colonIdx + 1).trim() : "";
+        return `
+            <div class="header-item">
+                <span class="header-key">${escapeHtml(key)}</span>
+                <span class="header-value">${escapeHtml(value)}</span>
+            </div>
+        `;
+    }).join('');
+
+    document.getElementById('request').innerHTML = `
+        <h4>Headers:</h4>
+        <div class="header-list">
+            ${headersHtml}
+        </div>
+
+        <h4 style="margin-top: 16px;">Cookies:</h4>
+        <div class="code-block" style="color: #dbab79; min-height: 20px;">
+            ${cookies ? escapeHtml(cookies) : '<i style="color: #6e7681;">No cookies sent or captured</i>'}
+        </div>
+        ${cookies ? `<button class="copy-btn" onclick="copyText('${escapeForJs(cookies)}')">📋 Copy Cookies</button>` : ''}
+        
+        <h4 style="margin-top: 16px;">Body:</h4>
+        <div class="code-block" style="min-height: 20px;">
+            ${body ? escapeHtml(body) : '<i style="color: #6e7681;">Empty body</i>'}
+        </div>
+        ${body ? `<button class="copy-btn" onclick="copyText('${escapeForJs(body)}')">📋 Copy Body</button>` : ''}
+    `;
+}
+
+function renderResponse() {
+    if (!selectedRequest) return;
+    const res = selectedRequest.response;
+    const headers = res.headers || '';
+    const body = res.body || '';
+
+    const headerLines = headers.split('\r\n').filter(h => h.trim());
+    
+    const headersHtml = headerLines.map(h => {
+        const colonIdx = h.indexOf(':');
+        if (colonIdx === -1) return '';
+        const key = h.substring(0, colonIdx);
+        const value = h.substring(colonIdx + 1).trim();
+        return `
+            <div class="header-item">
+                <span class="header-key">${escapeHtml(key)}</span>
+                <span class="header-value">${escapeHtml(value)}</span>
+            </div>
+        `;
+    }).join('');
+
+    document.getElementById('response').innerHTML = `
+        <h4>Headers:</h4>
+        <div class="header-list">
+            ${headersHtml}
+        </div>
+        
+        <h4 style="margin-top: 16px;">Body:</h4>
+        <div class="code-block">${escapeHtml(body)}</div>
+        <button class="copy-btn" onclick="copyText('${escapeForJs(body)}')">📋 Copy Body</button>
+    `;
+}
+
+    function copyCurl() {
+        if (!selectedRequest) return;
+
+        const req = selectedRequest;
+        let curl = `curl -X ${req.method} '${req.url}'`;
+
+        if (req.request.headers) {
+            req.request.headers.forEach(h => {
+                if (!h.includes('***MASKED***')) {
+                    curl += ` \\\n  -H '${h}'`;
+                }
+            });
+        }
+
+        if (req.request.body) {
+            curl += ` \\\n  -d '${req.request.body.replace(/'/g, "\\'")}'`;
+        }
+
+        copyText(curl);
+    }
+
+        function copyText(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Copied!';
+            btn.style.background = 'rgba(63, 185, 80, 0.2)';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '';
+            }, 1500);
+        });
+    }
+
+function escapeForJs(text) {
+    return text.replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+}
+
+    // Initialize both panels
+    refreshHttp();
+    refreshLogs();
+    httpAutoRefreshInterval = setInterval(refreshHttp, 3000);
+    logsAutoRefreshInterval = setInterval(refreshLogs, 3000);
+</script>
+
+</body>
 </html>
