@@ -136,6 +136,7 @@ namespace z3nCore
                 project.Var(pair.Key, pair.Value);
             }
         }
+        
         public static void VarsFromJson(this IZennoPosterProjectModel project, string  json = "jVars")
         {
             if (json == "jVars") json = project.Var("jVars");

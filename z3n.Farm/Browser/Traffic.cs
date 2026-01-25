@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Newtonsoft.Json;
 using ZennoLab.CommandCenter;
 using ZennoLab.InterfacesLibrary.ProjectModel;
 using Newtonsoft.Json.Linq;
@@ -215,8 +216,7 @@ namespace z3nCore
             snapshot["totalEndpoints"] = uniqueEndpoints.Count;
             snapshot["endpoints"] = new JArray(uniqueEndpoints.Values);
     
-            string json = snapshot.ToString(Newtonsoft.Json.  Formatting.Indented);
-            
+            string json = JsonConvert.SerializeObject(snapshot, Formatting.Indented);
             return json;
         }
 

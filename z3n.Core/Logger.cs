@@ -210,9 +210,10 @@ public static partial class ProjectExtensions
         new Logger(project).Warn(toLog, callerName, show: show, thrw: thrw, toZp: toZp);
     }
     
-    public static void warn(this IZennoPosterProjectModel project, Exception ex, bool thrw = false, [CallerMemberName] string callerName = "", bool show = true, bool toZp = true)
+    public static void warn(this IZennoPosterProjectModel project, Exception ex, bool thrw = false, [CallerMemberName] string callerName = "", bool withStack = false, bool toZp = true)
     {
-        new Logger(project).Warn(ex.Message, callerName, show: show, thrw: thrw, toZp: toZp);
+        var toSend = withStack? ex.Message + "\n" + ex.StackTrace : ex.Message;
+        new Logger(project).Warn(toSend, callerName, show: true, thrw: thrw, toZp: toZp);
     }
     
     internal static void ObsoleteCode(this IZennoPosterProjectModel project, string newName = "unknown")

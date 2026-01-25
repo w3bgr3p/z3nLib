@@ -2,6 +2,7 @@
 using ZennoLab.InterfacesLibrary.ProjectModel;
 using System.Linq;
 using System;
+using System.Data;
 using NBitcoin;
 using Newtonsoft.Json;
 namespace z3nCore
@@ -135,8 +136,10 @@ namespace z3nCore
             bool exist = project.TblExist (table, log);
             if (!exist) project.TblAdd(tableStructure,table, log);
             
-            
         }
+        
+
+        
         public static Dictionary<string, bool> FormKeyBool(this IZennoPosterProjectModel project,int quantity, List<string> keyPlaceholders = null, List<string> valuePlaceholders = null, string title = "Input Key-Bool Pairs", bool prepareUpd = true)
         {
             var _project = project;
@@ -643,8 +646,10 @@ namespace z3nCore
             foreach (var tableEntry in template)
             {
                 string tableName = tableEntry.Key;
+                var defaultSerial = (tableName == "_api" || tableName == "_rpc") ? "TEXT" : "INTEGER";
+                
                 List<string> columns = tableEntry.Value;
-                db.PrepareTable(columns, tableName, log: true, prune: false, rearrange: true);
+                db.PrepareTable(columns, tableName, serial:defaultSerial, log: true, prune: false, rearrange: true);
             }
         }
 

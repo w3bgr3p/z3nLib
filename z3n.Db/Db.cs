@@ -516,13 +516,12 @@ namespace z3nCore
                 RearrangeColumns(tableStructure, tableName, log);
         }
 
-        public void PrepareTable(List<string> columns, string tableName = null, string defaultType = "TEXT DEFAULT ''", bool log = false, bool prune = false, bool rearrange = false)
+        public void PrepareTable(List<string> columns, string tableName = null, string defaultType = "TEXT DEFAULT ''", string serial = "INTEGER", bool log = false, bool prune = false, bool rearrange = false)
         {
             var tableStructure = new Dictionary<string, string>
             {
-                { "id", "INTEGER PRIMARY KEY AUTOINCREMENT" }
+                { "id", (serial == "INTEGER") ? $"{serial} PRIMARY KEY AUTOINCREMENT" : $"{serial} PRIMARY KEY" }
             };
-
             foreach (var column in columns)
             {
                 string trimmed = column.Trim();
@@ -531,7 +530,6 @@ namespace z3nCore
                     tableStructure.Add(trimmed, defaultType);
                 }
             }
-
             PrepareTable(tableStructure, tableName, log, prune, rearrange);
         }
         #endregion

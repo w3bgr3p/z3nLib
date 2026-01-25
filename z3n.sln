@@ -32,6 +32,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOPn", "_projects\IOPn\IOPn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarketMaverics", "_projects\MarketMaverics\MarketMaverics.csproj", "{A11CDEC9-D085-4A2F-B9C8-32489D45F6AB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zeko", "_projects\Zeko\Zeko.csproj", "{3106D5EE-6E0B-424D-BE8C-07B5A619B95F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZkNoid", "_projects\ZkNoid\ZkNoid.csproj", "{248C1C85-26D3-4A63-AE6D-E83555F2509E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,5 +106,13 @@ Global
 		{A11CDEC9-D085-4A2F-B9C8-32489D45F6AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A11CDEC9-D085-4A2F-B9C8-32489D45F6AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A11CDEC9-D085-4A2F-B9C8-32489D45F6AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3106D5EE-6E0B-424D-BE8C-07B5A619B95F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3106D5EE-6E0B-424D-BE8C-07B5A619B95F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3106D5EE-6E0B-424D-BE8C-07B5A619B95F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3106D5EE-6E0B-424D-BE8C-07B5A619B95F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{248C1C85-26D3-4A63-AE6D-E83555F2509E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{248C1C85-26D3-4A63-AE6D-E83555F2509E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{248C1C85-26D3-4A63-AE6D-E83555F2509E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{248C1C85-26D3-4A63-AE6D-E83555F2509E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
